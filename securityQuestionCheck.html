@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Question Check</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 90%;
+            padding: 10px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            text-align: center;
+            text-decoration: none;
+            color: #fff;
+            background-color: #3498db;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #errorMessage {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Security Question Check</h1>
+        <form id="securityQuestionForm">
+            <label for="securityAnswer">Security Question:</label>
+            <p id="securityQuestionText"></p>
+            <input type="text" id="securityAnswer" name="securityAnswer" required>
+
+            <button type="button" onclick="checkSecurityQuestion()">Submit</button>
+        </form>
+        <p id="errorMessage"></p>
+
+        <script>
+            let email; // Declare email in a higher scope
+            let question; // Declare question in a higher scope
+
+            document.addEventListener('DOMContentLoaded', function () {
+                // Fetch the parameters from the URL
+                const urlParams = new URLSearchParams(window.location.search);
+                email = urlParams.get('email');
+
+                // Fetch security question using the email
+                fetchSecurityQuestion(email);
+
+                // You can add other initialization logic here
+            });
+
+            function fetchSecurityQuestion(email) {
+                // Fetch the security question from the server
+                fetch(`http://127.0.0.1:3000/getSecurityQuestion?email=${email}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Display the security question
+                            question = data.question; // Store the question in a variable
+                            document.getElementById('securityQuestionText').innerText = question;
+                        } else {
+                            console.error('Error fetching security question. Response:', data);
+                            alert('An error occurred while fetching the security question. Please try again.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error during fetch:', error);
+                        alert('An error occurred while fetching the security question. Please try again.');
+                    });
+            }
+
+            function checkSecurityQuestion() {
+                const securityAnswer = document.getElementById('securityAnswer').value;
+
+                fetch('http://127.0.0.1:3000/checkSecurityQuestion', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        securityAnswer: securityAnswer,
+                    }),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(`Security question answered correctly. Redirecting to success page with username: ${data.username}`);
+                            // You can redirect to the success page here
+                            window.location.href = `success.html?username=${data.username}`;
+                        } else {
+                            document.getElementById('errorMessage').innerText = data.error;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error during fetch:', error);
+                        alert('An error occurred. Please try again.');
+                    });
+            }
+        </script>
+    </div>
+</body>
+
+</html>

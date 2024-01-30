@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Code</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 90%;
+            padding: 10px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            text-align: center;
+            text-decoration: none;
+            color: #fff;
+            background-color: #3498db;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #verificationMessage {
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Verify Code</h1>
+        <p id="verificationMessage"></p>
+        <form id="verifyForm" action="/verify" method="post">
+            <label for="verificationCode">Verification Code:</label>
+            <input type="text" id="verificationCode" name="verificationCode" required>
+
+            <button type="submit">Verify</button>
+        </form>
+    </div>
+
+    <script>
+        let email; // Declare email in a higher scope
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Fetch the email parameter from the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            email = urlParams.get('email');
+
+            // Display the verification message
+            document.getElementById('verificationMessage').textContent = `Verification code sent to ${email}`;
+        });
+
+        document.getElementById('verifyForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('http://127.0.0.1:3000/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        verificationCode: formData.get('verificationCode'),
+                    }),
+                });
+
+                if (!response.ok) {
+                    // Check the status and handle different types of errors
+                    if (response.status === 401) {
+                        throw new Error('Invalid verification code. Please check and try again.');
+                    } else {
+                        throw new Error(`Request failed with status: ${response.status}`);
+                    }
+                }
+
+                const result = await response.json();
+
+                if (result && result.success) {
+                    // Redirect to securityQuestionCheck.html with user and question parameters
+                    window.location.href = `securityQuestionCheck.html?email=${email}`;
+                } else {
+                    console.error('Verification failed. Response:', result);
+                    alert('Verification failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error during fetch:', error);
+                alert(error.message); // Display the specific error message
+            }
+        });
+    </script>
+</body>
+
+</html>
